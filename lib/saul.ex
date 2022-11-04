@@ -36,8 +36,7 @@ defmodule Saul do
       invalid). `reason` can be any term: if it is not a `Saul.Error` struct,
       `validate/2` will take care of wrapping it into a `Saul.Error`.
 
-    * `:error` - it means validation failed. It is the same as `{:error, reason}`,
-      except the reason only mentions that a "predicate failed".
+    * `:error` - it means validation failed. It is the same as `{:error, reason}`, except the reason is `:predicate_failed`.
 
     * `true` - it means validation succeeded. It is the same as `{:ok,
       transformed}`, but it can be used when the transformed value is the same
@@ -97,7 +96,7 @@ defmodule Saul do
       iex> failer = fn(_) -> {:error, :bad} end
       iex> {:error, %Saul.Error{} = error} = Saul.validate(3.14, failer)
       iex> error.reason
-      ":bad"
+      :bad
 
   """
   @spec validate(term, validator(value)) ::
@@ -117,9 +116,9 @@ defmodule Saul do
       {:error, %Saul.Error{}} = result ->
         result
       {:error, reason} ->
-        {:error, %Saul.Error{validator: validator, reason: inspect(reason), term: {:term, term}}}
+        {:error, %Saul.Error{validator: validator, reason: reason, term: {:term, term}}}
       failed when failed in [false, :error] ->
-        {:error, %Saul.Error{validator: validator, reason: "predicate failed", term: {:term, term}}}
+        {:error, %Saul.Error{validator: validator, reason: :predicate_failed, term: {:term, term}}}
       other ->
         raise ArgumentError, "validator should return {:ok, term}, {:error, term}, " <>
                              "or a boolean, got: #{inspect(other)}"

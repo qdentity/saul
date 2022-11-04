@@ -41,11 +41,20 @@ defmodule Saul.Error do
   def message(%__MODULE__{} = error) do
     %{validator: validator, position: position, reason: reason, term: term} = error
 
-    reason = cond do
-      is_exception(reason) -> Exception.message(reason)
-      is_binary(reason) && String.valid?(reason) -> reason
-      true -> inspect(reason)
-    end
+    reason =
+      case error.reason do
+        :predicate_failed ->
+          "predicate failed"
+
+        reason when is_exception(reason) ->
+          Exception.message(reason)
+
+        reason when is_binary(reason) ->
+          if String.valid?(reason), do: reason, else: inspect(reason)
+
+        _ ->
+          inspect(reason)
+      end
 
     IO.iodata_to_binary([
       if(validator, do: ["(", validator_to_string(validator), ") "], else: []),

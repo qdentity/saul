@@ -22,7 +22,7 @@ defmodule SaulTest do
     end
 
     test "accepts :error as return value" do
-      assert {:error, %Error{reason: "predicate failed"}} = validate(42, fn _ -> :error end)
+      assert {:error, %Error{reason: :predicate_failed}} = validate(42, fn _ -> :error end)
     end
 
     test "fails when a validator doesn't return one of the allowed values" do
@@ -78,12 +78,12 @@ defmodule SaulTest do
       validator = fn _term -> {:error, :bad_term} end
       named_validator = named_validator(validator, "some validator")
       assert {:error, %Error{} = error} = validate(:foo, named_validator)
-      assert error.reason == ":bad_term"
+      assert error.reason == :bad_term
       assert error.validator == "some validator"
 
       named_validator = named_validator(&is_atom/1, "is_atom guard")
       assert {:error, %Error{} = error} = validate("foo", named_validator)
-      assert error.reason == "predicate failed"
+      assert error.reason == :predicate_failed
       assert error.validator == "is_atom guard"
     end
   end
@@ -182,6 +182,7 @@ defmodule SaulTest do
 
     test "validates that the given term is a map" do
       assert {:error, %Error{} = error} = validate(:ok, map_of(fn _ -> true end, fn _ -> true end))
+      assert error.reason == :predicate_failed
       assert Exception.message(error) =~ "predicate failed"
     end
 
@@ -208,7 +209,7 @@ defmodule SaulTest do
 
     test "ensures that the given term is a map" do
       assert {:error, %Error{} = error} = validate(:ok, map([], %{foo: {:optional, &is_atom/1}}))
-      assert error.reason =~ "predicate failed"
+      assert error.reason == :predicate_failed
     end
 
     test "ensures that all the :required keys are present" do
