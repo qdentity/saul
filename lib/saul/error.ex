@@ -34,20 +34,18 @@ defmodule Saul.Error do
   @type t :: %__MODULE__{
     validator: Saul.validator(any()) | nil,
     position: String.t() | {:index, pos_integer()} | {:key, term()},
-    reason: t() | String.t(),
+    reason: Exception.t() | String.t() | Inspect.t(),
     term: {:term, term()} | nil
   }
 
   def message(%__MODULE__{} = error) do
     %{validator: validator, position: position, reason: reason, term: term} = error
 
-    reason =
-      case reason do
-        %__MODULE__{} ->
-          message(reason)
-        reason when is_binary(reason) ->
-          reason
-      end
+    reason = cond do
+      is_exception(reason) -> Exception.message(reason)
+      is_binary(reason) && String.valid?(reason) -> reason
+      true -> inspect(reason)
+    end
 
     IO.iodata_to_binary([
       if(validator, do: ["(", validator_to_string(validator), ") "], else: []),
